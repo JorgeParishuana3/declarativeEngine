@@ -1,0 +1,11 @@
+{
+  "name": "ingest-api",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "type": "module",
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "fastify": "^4.17.0",
+    "dotenv": "^16.3.1"
+  }
+}
