@@ -6,6 +6,8 @@ import { PORT } from "./config.js";
 
 const app = Fastify({ logger: true });
 
+
+// Endpoint de recibo de datos (Notificacion)
 app.post("/orion/notify", async (req, reply) => {
   try {
     const body = req.body;
@@ -13,6 +15,8 @@ app.post("/orion/notify", async (req, reply) => {
 
     const { pipeline, version } = selectPipeline(parsed);
 
+    // Los datos llegan → Se les agrega la info de la pipeline que usaran → Se marca el nodo actual (Ingest)
+    // → se publica en la cola central (FANOUT) para que los workers comiencen a consumir
     const message = {
       pipeline,
       version,
@@ -35,6 +39,8 @@ app.post("/orion/notify", async (req, reply) => {
   }
 });
 
+// Inicia y hace assert de la cola RABBIT MQ
+// Nota: El Docker File aún no tiene configurado el inicio del servicio rabbit -> pendiente a agregar con compose
 const start = async () => {
   await connectRabbit();
   await app.listen({ port: PORT, host: "0.0.0.0" });
