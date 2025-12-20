@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  ingest-api:
+    image: ingest-api
+    build:
+      context: ./ingest_api
+
+  worker-python:
+    image: worker-python
+    build:
+      context: ./workers
+      dockerfile: worker-python/Dockerfile
+
+  worker-db:
+    image: worker-db
+    build:
+      context: ./workers
+      dockerfile: worker-db/Dockerfile
+

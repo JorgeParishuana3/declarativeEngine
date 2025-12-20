@@ -2,8 +2,9 @@ import json
 from shared.messaging.rabbitClient import RabbitClient
 from shared.pipeline.registry_client import PipelineRegistryClient
 from shared.utils.logger import log_info, log_warn, log_error
+from types import SimpleNamespace
 #from executor import run_python_script
-from config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE
+from config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
 
 
 def handle_message(channel, method, props, body):
@@ -58,16 +59,39 @@ def handle_message(channel, method, props, body):
 
 
 
-def handle_message_test(channel, method, props, body):
-    print(body)
+def handle_message_test(channel, method, props, bodyB):
+    body = json.loads(bodyB.decode("utf-8"))
+    if body["pipeline"] == "parking":
+        print("parking", body["data"])
+
+
+    elif body ["pipeline"] == "cuenta_personas": 
+        
+        body["data"]["cam_id"] = body.get("meta",{}).get("entityId")
+
+        body["config"]["table"] = "cuenta-personas"
+
+        body["lastNode"] = body["node"]
+        body["node"] = "bd_manager"
+        channel.basic_publish(
+                exchange=EXCHANGE,
+                routing_key=EXCHANGE + ".bd_manager",
+                body=json.dumps(body),
+                properties=props
+            )
+
+        print("cuentap", body)
+    
     channel.basic_ack(method.delivery_tag)
+
+
 
 def run():
     log_info("Starting worker-python...")
 
     rabbit = RabbitClient(RABBIT_URL, EXCHANGE)
     rabbit.connect()
-    rabbit.setup_queue(QUEUE_NAME)
+    rabbit.setup_queue(QUEUE_NAME,ROUTING_KEY)
 
     rabbit.channel.basic_qos(prefetch_count=1)
     rabbit.channel.basic_consume(queue=QUEUE_NAME, on_message_callback=handle_message_test)

@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbit
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - testnet
+
+  worker-python:
+    image: worker-python
+    container_name: worker-python
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq
+      QUEUE_NAME: worker-python
+    networks:
+      - testnet
+  worker-db:
+    image: worker-db
+    container_name: worker-db
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq
+      QUEUE_NAME: worker-db
+    networks:
+      - testnet
+
+  ingest-api:
+    image: ingest-api
+    container_name: ingest-api
+    ports:
+      - "3001:3001"    
+    depends_on:
+      - rabbitmq
+    environment:
+      RABBITMQ_URL: amqp://rabbitmq
+      PORT: 3001
+    networks:
+      - testnet
+
+networks:
+  testnet:
+    external: true

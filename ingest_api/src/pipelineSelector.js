@@ -1,12 +1,15 @@
 export function selectPipeline(orionData) {
     const type = orionData.type;
 
+    console.log("Intentando agregar pipeline: " + JSON.stringify(orionData, null, 2));
+
     // Simple routing
     // Esta parte es un Mock.
     // Se supone que el servicio pregunta a otro por el pipeline para el tipo de dato. 
     // (Sera otro api rest, aún no implementado)
-    if (type === "AirSensor") return { pipeline: "smart_city", version: "v1" };
-    if (type === "ParkingMeter") return { pipeline: "parking", version: "v2" };
+    if (type === "lora_wan") return { pipeline: "lorawan", next: "workerpython", version: "v1" };
+    if (type === "smart_parking") return { pipeline: "parking", next: "workerpython", version: "v2" };
+    if (type === "cuenta_personas") return { pipeline: "cuenta_personas", next: "workerpython", version: "v2" };
 
-    return { pipeline: "default_pipeline", version: "v1" };
+    return { pipeline: "default_pipeline", next: "workerpython", version: "v1" };
 }
