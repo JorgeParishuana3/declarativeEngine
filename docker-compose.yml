@@ -21,21 +21,19 @@ services:
     container_name: worker-python
     depends_on:
       - rabbitmq
-    environment:
-      RABBITMQ_URL: amqp://rabbitmq
-      QUEUE_NAME: worker-python
     networks:
       - testnet
+    volumes:
+      - ./config_files/worker-python:/app/src/config
   worker-db:
     image: worker-db
     container_name: worker-db
     depends_on:
       - rabbitmq
-    environment:
-      RABBITMQ_URL: amqp://rabbitmq
-      QUEUE_NAME: worker-db
     networks:
       - testnet
+    volumes:
+      - ./config_files/worker-db:/app/src/config
 
   ingest-api:
     image: ingest-api

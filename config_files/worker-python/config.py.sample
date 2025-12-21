@@ -1,0 +1,5 @@
+RABBIT_URL = "amqp://rabbitmq"
+REGISTRY_URL = "http://pipeline-registry:2323"
+QUEUE_NAME = "worker-python"
+EXCHANGE = "pipeline"
+ROUTING_KEY = "workerpython"

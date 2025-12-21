@@ -2,13 +2,15 @@ import json
 from shared.messaging.rabbitClient import RabbitClient
 from shared.pipeline.registry_client import PipelineRegistryClient
 from shared.utils.logger import log_info, log_warn, log_error
-#from executor import run_python_script
-from config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE,ROUTING_KEY
+
+from dynamic_writer import write_json_row
+from config.config import RABBIT_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
 
 
 def handle_message_test(channel, method, props, bodyB):
     body = json.loads(bodyB.decode("utf-8"))
     print(body["data"])
+    write_json_row( table="cupe_registros",  payload=body["data"], column_map={'cam_id':"cam_id",'timestamp': "ts",'aforo':"aforo"})
     
     channel.basic_ack(method.delivery_tag)
 

@@ -1,0 +1,12 @@
+RABBIT_URL = "amqp://rabbitmq"
+REGISTRY_URL =  "http://pipeline-registry:1231"
+QUEUE_NAME = "worker-db"
+
+EXCHANGE = "pipeline"
+ROUTING_KEY = "bd_manager"
+
+PGHOST= "localhost"
+PGPORT= 1554
+PGDATABASE= "postgres"
+PGUSER = "postgres"
+PGPASSWORD = "password"

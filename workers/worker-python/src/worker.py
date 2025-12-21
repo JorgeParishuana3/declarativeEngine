@@ -4,7 +4,7 @@ from shared.pipeline.registry_client import PipelineRegistryClient
 from shared.utils.logger import log_info, log_warn, log_error
 from types import SimpleNamespace
 #from executor import run_python_script
-from config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
+from config.config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
 
 
 def handle_message(channel, method, props, body):
@@ -81,6 +81,9 @@ def handle_message_test(channel, method, props, bodyB):
             )
 
         print("cuentap", body)
+    else:
+        print("Unknown",["data"])
+
     
     channel.basic_ack(method.delivery_tag)
 
