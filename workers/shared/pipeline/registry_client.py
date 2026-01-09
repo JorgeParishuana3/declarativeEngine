@@ -6,8 +6,8 @@ class PipelineRegistryClient:
         self.registry_url = registry_url
 
     @lru_cache(maxsize=128)
-    def load(self, pipeline, version):
-        url = f"{self.registry_url}/pipelines/{pipeline}/{version}"
+    def loadNextStep(self, pipeline, version, stepId):
+        url = f"{self.registry_url}/pipeline/{pipeline}/{version}/{stepId}/next"
         resp = requests.get(url)
         
         resp.raise_for_status()

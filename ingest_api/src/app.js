@@ -18,6 +18,7 @@ app.post("/orion/notify", async (req, reply) => {
     // Los datos llegan → Se les agrega la info de la pipeline que usaran → Se marca el nodo actual (Ingest)
     // → se publica en la cola central (FANOUT) para que los workers comiencen a consumir
     const message = {
+      proyect: parsed.type,
       pipeline,
       version,
       lastNode: "ingest",

@@ -17,4 +17,9 @@ services:
     build:
       context: ./workers
       dockerfile: worker-db/Dockerfile
-
+  
+  pipeline-registry:
+    image: pipeline-registry
+    build:
+      context: ./pipeline_registry
+      dockerfile: Dockerfile

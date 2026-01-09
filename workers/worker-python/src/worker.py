@@ -1,4 +1,6 @@
 import json
+import math
+import random
 from shared.messaging.rabbitClient import RabbitClient
 from shared.pipeline.registry_client import PipelineRegistryClient
 from shared.utils.logger import log_info, log_warn, log_error
@@ -6,6 +8,7 @@ from types import SimpleNamespace
 #from executor import run_python_script
 from config.config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
 
+registry = PipelineRegistryClient(REGISTRY_URL)
 
 def handle_message(channel, method, props, body):
     msg = json.loads(body)
@@ -60,9 +63,38 @@ def handle_message(channel, method, props, body):
 
 
 def handle_message_test(channel, method, props, bodyB):
-    body = json.loads(bodyB.decode("utf-8"))
+    body = json.load(bodyB.decode("utf-8"))
+    #pipelineInfo = body["pipeline-info"]
+    #nextStepData = registry.loadNextStep(pipelineInfo["pipeline_name"], pipelineInfo["version"], pipelineInfo["stepId"])
+    #print("NEXTSTEP DATA ", nextStepData)
     if body["pipeline"] == "parking":
-        print("parking", body["data"])
+        data = body["data"]
+        spots = data.get("parking_spots", [])
+
+        state = "".join("1" if spot["occupied"] else "0" for spot in spots)
+        ids = [spot["spot_id"] for spot in spots]
+        
+        n = len(state)
+        if random.choice([True, False]):
+            lay = [1, n]
+        else:
+            lay = [2, math.ceil(n / 2)]
+    
+        body["data"]["cam_id"] = body.get("meta",{}).get("entityId")
+        body["data"]["spots_state"] = state
+        body["data"]["ids"] = ids
+        body["data"]["layout"] = lay
+        body["lastNode"] = body["node"]
+        body["node"] = "bd_manager"
+        body["data"].pop("parking_spots", None)
+    
+        channel.basic_publish(
+                exchange=EXCHANGE,
+                routing_key=EXCHANGE + ".bd_manager",
+                body=json.dumps(body),
+                properties=props
+            )        
+        print("parking form: ", body ["data"])
 
 
     elif body ["pipeline"] == "cuenta_personas": 

@@ -48,6 +48,17 @@ services:
     networks:
       - testnet
 
+  pipeline-registry:
+    image: pipeline-registry
+    container_name: pipeline-registry
+    ports:
+      - "3002:3002"
+    networks:
+      - testnet
+    volumes:
+      - ./artifacts_files/pipelines:/app/src/pipelines
+
+
 networks:
   testnet:
     external: true

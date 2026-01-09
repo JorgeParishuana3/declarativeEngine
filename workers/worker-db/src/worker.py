@@ -10,7 +10,15 @@ from config.config import RABBIT_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
 def handle_message_test(channel, method, props, bodyB):
     body = json.loads(bodyB.decode("utf-8"))
     print(body["data"])
-    write_json_row( table="cupe_registros",  payload=body["data"], column_map={'cam_id':"cam_id",'timestamp': "ts",'aforo':"aforo"})
+    print(body["proyect"])
+    try:
+        if body["proyect"] == "cuenta_personas":
+            write_json_row( table="cupe_registros",  payload=body["data"], column_map={'cam_id':"cam_id",'timestamp': "ts",'aforo':"aforo"})
+        elif body["proyect"] == "smart_parking":
+            write_json_row( table="sp_registros",  payload=body["data"], column_map={'cam_id':"cam_id",'timestamp': "ts",'spots_state':"spots_state", "layout":"layout", "ids": "spot_ids"})
+
+    except Exception as e:
+        print("Esrror : ", e)
     
     channel.basic_ack(method.delivery_tag)
 
