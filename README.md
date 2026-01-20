@@ -1,8 +1,15 @@
 # Declarative Pipeline Engine
+La Declarative Pipeline Engine es una implementación propia y ligera de un sistema de pipelines declarativos. Inspirado en soluciones comúnmente usadas en IoT como thingsboard. Su principal funcionalidad es la de implementar un sistema en el que un conjunto de administradores (Miembros Techlab) puedan definir el procesamiento de datos de forma declarativa mediante archivos .json de forma declarativa.
+
+Es decir, en lugar de cambiar la implementación ante la inclusión de nuevos proyectos, actualización en el flujo de información deseado, implementación de nuevas transformaciones de datos, cambios de almacenamiento, etc. Los administradores podrán simplemente subir un nuevo archivo .json con el nuevo pipeline.
+
+Los pipelines definen pasos por el que cada dato puede pasar. Actualmente, se disponen `workers`, los cuales abordan estos pasos. Uno para transformación mediante scripts python y otro para la escritura en base de datos. Un dato es recibido por el sistema, en un api-rest, revisa el pipeline definido para ese tipo de dato, y procede a fluir a través de los workers hasta cumplir con el pipeline definido. 
+
 
 ![Arquitectura Image](static/images/PIPELINEREGISTRY.drawio.png)
 
 ## Sub módulos del motor
+
 
 ### 1. ingest_api
 
