@@ -5,6 +5,11 @@ services:
     image: ingest-api
     build:
       context: ./ingest_api
+      
+  db-api:
+    image: db-api
+    build:
+      context: ./dbapi
 
   worker-python:
     image: worker-python

@@ -39,12 +39,20 @@ services:
     image: ingest-api
     container_name: ingest-api
     ports:
-      - "3001:3001"    
+      - "3003:3003"    
     depends_on:
       - rabbitmq
     environment:
       RABBITMQ_URL: amqp://rabbitmq
-      PORT: 3001
+      PORT: 3003
+    networks:
+      - testnet
+  
+  db-api:
+    image: db-api
+    container_name: db-api
+    ports:
+      - "3004:3004"    
     networks:
       - testnet
 

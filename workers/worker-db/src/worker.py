@@ -16,6 +16,9 @@ def handle_message_test(channel, method, props, bodyB):
             write_json_row( table="cupe_registros",  payload=body["data"], column_map={'cam_id':"cam_id",'timestamp': "ts",'aforo':"aforo"})
         elif body["proyect"] == "smart_parking":
             write_json_row( table="sp_registros",  payload=body["data"], column_map={'cam_id':"cam_id",'timestamp': "ts",'spots_state':"spots_state", "layout":"layout", "ids": "spot_ids"})
+        elif body["proyect"] == "lora_wan":
+            write_json_row( table="caliaire_registros",  payload=body["data"], column_map={'idb':"idb",'timestamp': "fecha_registro",'humedad':"humedad", "temperatura":"temperatura_c", "dioxido_de_carbono": "dioxido_carbono_ppm"})
+    
 
     except Exception as e:
         print("Esrror : ", e)
