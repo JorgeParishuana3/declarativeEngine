@@ -25,6 +25,7 @@ services:
       - testnet
     volumes:
       - ./config_files/worker-python:/app/src/config
+      - ./artifacts_files/python-scripts:/app/scripts
   worker-db:
     image: worker-db
     container_name: worker-db

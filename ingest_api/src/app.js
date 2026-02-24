@@ -13,7 +13,7 @@ app.post("/orion/notify", async (req, reply) => {
     const body = req.body;
     const parsed = parseOrionNotification(body);
 
-    const { pipeline, next, version } = selectPipeline(parsed);
+    const { pipeline, next, version, config } = selectPipeline(parsed);
 
     // Los datos llegan → Se les agrega la info de la pipeline que usaran → Se marca el nodo actual (Ingest)
     // → se publica en la cola central (FANOUT) para que los workers comiencen a consumir
@@ -24,7 +24,7 @@ app.post("/orion/notify", async (req, reply) => {
       lastNode: "ingest",
       node: next,
       data: parsed.attributes,
-      config: {},
+      config: config||{},
       meta: {
         entityId: parsed.id,
         entityType: parsed.type,

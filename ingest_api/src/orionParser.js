@@ -24,6 +24,7 @@ export function parseOrionNotification(payload) {
         parsed.attributes[key] = val;
         }
     }
+    parsed.attributes["orion_id"] = data.id
 
     return parsed;
 }

@@ -1,6 +1,10 @@
 import json
 import math
 import random
+import importlib.util
+import sys
+import os
+from pathlib import Path
 from shared.messaging.rabbitClient import RabbitClient
 from shared.pipeline.registry_client import PipelineRegistryClient
 from datetime import datetime, timezone
@@ -11,103 +15,54 @@ from config.config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE, ROUTIN
 
 registry = PipelineRegistryClient(REGISTRY_URL)
 
-def decoder_from_hex(hex_payload):
+SCRIPTS_PATH = "/app/scripts"
 
-    bytes_data = bytes.fromhex(hex_payload)
+def load_script_module(script_name: str):
+    script_path = Path(SCRIPTS_PATH) / f"{script_name}.py"
 
-    # 2 bytes (16 bits)
-    idb = (bytes_data[0] << 8) | bytes_data[1]
-    humedad = (bytes_data[2] << 8) | bytes_data[3]
-    temperatura = (bytes_data[4] << 8) | bytes_data[5]
+    if not script_path.exists():
+        raise FileNotFoundError(f"Script {script_name} non encontrado")
 
-    # 3 bytes (24 bits)
-    dioxido_de_carbono = (
-        (bytes_data[6] << 16) |
-        (bytes_data[7] << 8) |
-        bytes_data[8]
-    )
+    module_name = f"scri[s_{script_name}"
 
-    # Aplicar escalas y offsets
-    return {
-        "idb": idb - 256,
-        "humedad": (humedad / 100) - 296,
-        "temperatura": (temperatura / 100) - 296,
-        "dioxido_de_carbono": (dioxido_de_carbono / 100) - 65536
-    }
+    # hot reload
+    if module_name in sys.modules:
+        del sys.modules[module_name]
+
+    spec = importlib.util.spec_from_file_location(module_name, script_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    return module
 
 
-def handle_message_test(channel, method, props, bodyB):
-    print(bodyB)
-    body = json.loads(bodyB.decode("utf-8"))
-    #pipelineInfo = body["pipeline-info"]
-    #nextStepData = registry.loadNextStep(pipelineInfo["pipeline_name"], pipelineInfo["version"], pipelineInfo["stepId"])
-    #print("NEXTSTEP DATA ", nextStepData)
-    if body["pipeline"] == "parking":
-        data = body["data"]
-        spots = data.get("parking_spots", [])
+def handle_message(channel, method, props, bodyB):
+    try:
+        body = json.loads(bodyB.decode("utf-8"))
 
-        state = "".join("1" if spot["occupied"] else "0" for spot in spots)
-        ids = [spot["spot_id"] for spot in spots]
-        
-        n = len(state)
-        if random.choice([True, False]):
-            lay = [1, n]
-        else:
-            lay = [2, math.ceil(n / 2)]
-    
-        body["data"]["cam_id"] = body.get("meta",{}).get("entityId")
-        body["data"]["spots_state"] = state
-        body["data"]["ids"] = ids
-        body["data"]["layout"] = lay
-        body["lastNode"] = body["node"]
-        body["node"] = "bd_manager"
-        body["data"].pop("parking_spots", None)
-    
-        channel.basic_publish(
-                exchange=EXCHANGE,
-                routing_key=EXCHANGE + ".bd_manager",
-                body=json.dumps(body),
-                properties=props
-            )        
-        print("parking form: ", body ["data"])
+        config = body.get("config", {})
+        script_name = config.get("script")
 
+        if not script_name:
+            raise ValueError("Missing required config.script")
 
-    elif body ["pipeline"] == "cuenta_personas": 
-        
-        body["data"]["cam_id"] = body.get("meta",{}).get("entityId")
+        params = config.get("params")
 
-        body["config"]["table"] = "cuenta-personas"
+        module = load_script_module(script_name)
 
-        body["lastNode"] = body["node"]
-        body["node"] = "bd_manager"
-        channel.basic_publish(
-                exchange=EXCHANGE,
-                routing_key=EXCHANGE + ".bd_manager",
-                body=json.dumps(body),
-                properties=props
-            )
+        if not hasattr(module, "process"):
+            raise AttributeError(f"{script_name}.py must define process()")
 
-        print("cuentap", body)
+        databody = body.get("data", {})
+        print ("[OG DATA]: ",databody )
+        result_data = module.process(
+            data=databody,
+            params=params
+        )
+        print ("[TF DATA]:", result_data)
 
-    elif body["pipeline"] == "lorawan":
-        data = body.get("data", {})
-        data_encode = data.get("data_encode")
-
-        if data_encode == "hexstring":
-            try:
-                hex_payload = data.get("data")
-                timestamp = datetime.fromtimestamp(data.get("timestamp"), tz=timezone.utc)
-                if hex_payload:
-                    decoded_data = decoder_from_hex(hex_payload)
-                    body["data"] = decoded_data
-                    body["data"]["timestamp"] = timestamp.isoformat()
-
-            except Exception as e:
-                print("Error decoding lorawan payload:", e)
-                channel.basic_ack(method.delivery_tag)
-                return
-
-        body["lastNode"] = body["node"]
+        body["data"] = result_data
+        body["lastNode"] = body.get("node")
         body["node"] = "bd_manager"
 
         channel.basic_publish(
@@ -117,13 +72,12 @@ def handle_message_test(channel, method, props, bodyB):
             properties=props
         )
 
-        print("lorawan:", body["data"])
+        channel.basic_ack(method.delivery_tag)
 
-    else:
-        print("Unknown",["data"])
+    except Exception as e:
+        print("Processing error:", e)
+        channel.basic_ack(method.delivery_tag)
 
-    
-    channel.basic_ack(method.delivery_tag)
 
 
 
@@ -135,7 +89,7 @@ def run():
     rabbit.setup_queue(QUEUE_NAME,ROUTING_KEY)
 
     rabbit.channel.basic_qos(prefetch_count=1)
-    rabbit.channel.basic_consume(queue=QUEUE_NAME, on_message_callback=handle_message_test)
+    rabbit.channel.basic_consume(queue=QUEUE_NAME, on_message_callback=handle_message)
 
     log_info("Listening for messages...")
     rabbit.channel.start_consuming()
