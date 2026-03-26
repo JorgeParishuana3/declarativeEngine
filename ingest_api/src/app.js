@@ -13,18 +13,17 @@ app.post("/orion/notify", async (req, reply) => {
     const body = req.body;
     const parsed = parseOrionNotification(body);
 
-    const { pipeline, next, version, config } = selectPipeline(parsed);
+    const { project, pipeline, version, stepId, routingKey } = await selectPipeline(parsed);
 
     // Los datos llegan → Se les agrega la info de la pipeline que usaran → Se marca el nodo actual (Ingest)
     // → se publica en la cola central (FANOUT) para que los workers comiencen a consumir
     const message = {
-      proyect: parsed.type,
+      project,
       pipeline,
       version,
-      lastNode: "ingest",
-      node: next,
+      lastNode: "init",
+      stepId,
       data: parsed.attributes,
-      config: config||{},
       meta: {
         entityId: parsed.id,
         entityType: parsed.type,
@@ -32,7 +31,7 @@ app.post("/orion/notify", async (req, reply) => {
       }
     };
 
-    await publishToPipeline(message,next);
+    await publishToPipeline(message, routingKey);
 
     return { status: "ok" };
   } catch (err) {

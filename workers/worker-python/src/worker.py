@@ -39,21 +39,32 @@ def load_script_module(script_name: str):
 def handle_message(channel, method, props, bodyB):
     try:
         body = json.loads(bodyB.decode("utf-8"))
+        project = body.get("project")
+        pipeline = body.get("pipeline")
+        version = body.get("version")
+        current_step_id = body.get("stepId")
+        databody = body.get("data", {})
+        meta = body.get("meta", {})
 
-        config = body.get("config", {})
+        if not pipeline or version is None or not current_step_id:
+            raise ValueError("Falta pipeline, version, o stepId")
+
+
+        step_info = registry.get_step(pipeline, version, current_step_id)
+        config = step_info.get("config", {})
+        is_final = step_info.get("isFinal", False)
+
         script_name = config.get("script")
-
         if not script_name:
-            raise ValueError("Missing required config.script")
+            raise ValueError("Falta el campo script en la config del paso: ", current_step_id )
 
         params = config.get("params")
 
         module = load_script_module(script_name)
 
         if not hasattr(module, "process"):
-            raise AttributeError(f"{script_name}.py must define process()")
+            raise AttributeError(f"{script_name}.py debe tener el metodo process()")
 
-        databody = body.get("data", {})
         print ("[OG DATA]: ",databody )
         result_data = module.process(
             data=databody,
@@ -61,14 +72,32 @@ def handle_message(channel, method, props, bodyB):
         )
         print ("[TF DATA]:", result_data)
 
-        body["data"] = result_data
-        body["lastNode"] = body.get("node")
-        body["node"] = "bd_manager"
+        if is_final:
+            channel.basic_ack(method.delivery_tag)
+            return
+
+
+        next_info = registry.get_next_step(pipeline, version, current_step_id)
+        next_step_id = next_info.get("stepId")
+        next_routing_key = next_info.get("routingKey")
+
+        if not next_step_id or not next_routing_key:
+            raise ValueError("No recibido stepId o routing key del siguiente paso")
+
+        next_message = {
+            "project": project,
+            "pipeline": pipeline,
+            "version": version,
+            "lastNode": current_step_id,
+            "stepId": next_step_id,
+            "data": result_data,
+            "meta": meta
+        }
 
         channel.basic_publish(
             exchange=EXCHANGE,
-            routing_key=EXCHANGE + ".bd_manager",
-            body=json.dumps(body),
+            routing_key=f"{EXCHANGE}.{next_routing_key}",
+            body=json.dumps(next_message),
             properties=props
         )
 

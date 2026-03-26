@@ -1,5 +1,5 @@
 export const stepTypeToWorkerRoutingKey =
 {
 "python-script": "workerpython",
-"db-save": "workerdb"
+"db-save": "bd_manager"
 }

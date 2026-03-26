@@ -46,6 +46,7 @@ services:
     environment:
       RABBITMQ_URL: amqp://rabbitmq
       PORT: 3003
+      PIPELINE_API_URL: http://pipeline-registry:3002
     networks:
       - testnet
   

@@ -1,15 +1,47 @@
-export function selectPipeline(orionData) {
-    const type = orionData.type;
+import { PIPELINE_API_URL } from "./config.js";
 
-    console.log("Intentando agregar pipeline: " + JSON.stringify(orionData, null, 2));
+export async function selectPipeline(orionData) {
+  const project = orionData.type;
 
-    // Simple routing
-    // Esta parte es un Mock.
-    // Se supone que el servicio pregunta a otro por el pipeline para el tipo de dato. 
-    // (Sera otro api rest, aún no implementado)
-    if (type === "lora_wan") return { pipeline: "lorawan", next: "workerpython", version: "v1", config: {"script": "calidadAire-decode", "params": {"sample":"sample2"}}};
-    if (type === "smart_parking") return { pipeline: "parking", next: "workerpython", version: "v2", config: {"script": "parking-transform"} };
-    if (type === "cuenta_personas") return { pipeline: "cuenta_personas", next: "workerpython", version: "v2", config: {"script": "cuentaP"}  };
+  const projectRes = await fetch(
+    `${PIPELINE_API_URL}/project/${encodeURIComponent(project)}`
+  );
 
-    return { pipeline: "default_pipeline", next: "workerpython", version: "v1" };
+  if (!projectRes.ok) {
+    throw new Error(`No se pudo obtener pipeline para el proyecto ${project}`);
+  }
+
+  const projectInfo = await projectRes.json();
+  const { pipeline, version } = projectInfo;
+
+  if (pipeline === undefined || version === undefined) {
+    throw new Error(`Respuesta inválida al consultar proyecto ${project}`);
+  }
+
+  const nextRes = await fetch(
+    `${PIPELINE_API_URL}/pipeline/${encodeURIComponent(pipeline)}/${encodeURIComponent(version)}/init/next`
+  );
+
+  if (!nextRes.ok) {
+    throw new Error(
+      `No se pudo obtener el siguiente paso del pipeline ${pipeline} versión ${version}`
+    );
+  }
+
+  const nextInfo = await nextRes.json();
+  const { stepId, routingKey } = nextInfo;
+
+  if (!stepId || !routingKey) {
+    throw new Error(
+      `Respuesta inválida al consultar siguiente paso de ${pipeline}/${version}/init`
+    );
+  }
+
+  return {
+    project,
+    pipeline,
+    version,
+    stepId,
+    routingKey
+  };
 }

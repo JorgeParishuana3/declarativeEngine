@@ -5,7 +5,6 @@ export default async function pipelineRoutes(fastify) {
   fastify.get(
     "/pipeline/:pipeline/:version/:stepId/next",
     async (request, reply) => {
-      console.log(pipelinesStore.pipelines);
       const { pipeline, version, stepId } = request.params;
 
       const pipelineEntry = pipelinesStore.pipelines[pipeline];
@@ -17,77 +16,74 @@ export default async function pipelineRoutes(fastify) {
         });
       }
 
-      const steps = pipelineData.steps;
+      const steps = pipelineData.steps ?? [];
+      let nextStep = null;
 
       if (stepId === "init") {
-        const firstStep = steps[0] ?? null;
+        nextStep = steps[0] ?? null;
+      } else {
+        const currentIndex = steps.findIndex((s) => s.stepId === stepId);
 
-        if (!firstStep) {
-        return {
-          pipeline,
-          version: Number(version),
-          nextStep: null,
-          nextRoutingKey: null
-        };
-      }
-
-        if(!(firstStep.stepType in stepTypeToWorkerRoutingKey)){
+        if (currentIndex === -1) {
           return reply.code(404).send({
-          error: "stepTypeInvalido"
+            error: "Paso no encontrado"
           });
         }
-        return {
-          pipeline: pipeline,
-          version: version,
-          nextStep: firstStep
-            ? {
-                stepId: firstStep.stepId,
-                stepType: firstStep.stepType,
-                isFinal: firstStep.isFinal,
-                config: firstStep.config ?? null
-              }
-            : null,
-          nextRoutingKey: stepTypeToWorkerRoutingKey[firstStep.stepType]
-        };
+
+        nextStep = steps[currentIndex + 1] ?? null;
       }
 
-      const currentIndex = steps.findIndex(
-        (s) => s.stepId === stepId
-      );
-
-      if (currentIndex === -1) {
-        return reply.code(404).send({
-          error: "Paso no encontrado"
-        });
-      }
-
-      if (currentIndex === steps.lenght - 1) {
+      if (!nextStep) {
         return reply.code(404).send({
           error: "No hay mas pasos"
         });
       }
 
-
-      const nextStep = steps[currentIndex + 1] ?? null;
-        if(!(nextStep.stepType in stepTypeToWorkerRoutingKey)){
-          return reply.code(404).send({
+      if (!(nextStep.stepType in stepTypeToWorkerRoutingKey)) {
+        return reply.code(404).send({
           error: "stepTypeInvalido"
-          });
-        }
+        });
+      }
+
       return {
-        pipeline: pipeline,
-        version: version,
-        nextStep: nextStep
-          ? {
-              stepId: nextStep.stepId,
-              stepType: nextStep.stepType,
-              isFinal: nextStep.isFinal,
-              config: nextStep.config ?? null
-            }
-          : null,
-          nextRoutingKey: stepTypeToWorkerRoutingKey[nextStep.stepType]
+        pipeline,
+        version: Number(version),
+        stepId: nextStep.stepId,
+        routingKey: stepTypeToWorkerRoutingKey[nextStep.stepType]
+      };
+    }
+  );
+
+  fastify.get(
+    "/pipeline/:pipeline/:version/:stepId",
+    async (request, reply) => {
+      const { pipeline, version, stepId } = request.params;
+
+      const pipelineEntry = pipelinesStore.pipelines[pipeline];
+      const pipelineData = pipelineEntry?.versions?.[Number(version)];
+
+      if (!pipelineData) {
+        return reply.code(404).send({
+          error: "Pipeline o versión no encontrada"
+        });
+      }
+
+      const steps = pipelineData.steps ?? [];
+      const step = steps.find((s) => s.stepId === stepId);
+
+      if (!step) {
+        return reply.code(404).send({
+          error: "Paso no encontrado"
+        });
+      }
+
+      return {
+        pipeline,
+        version: Number(version),
+        stepId: step.stepId,
+        isFinal: step.isFinal,
+        config: step.config ?? null
       };
     }
   );
 }
-
