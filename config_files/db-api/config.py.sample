@@ -1,0 +1,5 @@
+PGHOST= "postgres"
+PGPORT = 5432
+PGDATABASE= "otiappdb"
+PGUSER = "usuariopostgres"#
+PGPASSWORD = "passwordpostgres"#

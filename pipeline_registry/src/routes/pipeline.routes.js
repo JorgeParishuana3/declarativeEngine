@@ -1,4 +1,5 @@
 import { pipelinesStore } from "../store/pipelinesStore.js";
+import { stepTypeToWorkerRoutingKey } from "../stepTypeToWorkerRoutingKeyDict.js";
 
 export default async function pipelineRoutes(fastify) {
   fastify.get(
@@ -21,14 +22,32 @@ export default async function pipelineRoutes(fastify) {
       if (stepId === "init") {
         const firstStep = steps[0] ?? null;
 
+        if (!firstStep) {
         return {
+          pipeline,
+          version: Number(version),
+          nextStep: null,
+          nextRoutingKey: null
+        };
+      }
+
+        if(!(firstStep.stepType in stepTypeToWorkerRoutingKey)){
+          return reply.code(404).send({
+          error: "stepTypeInvalido"
+          });
+        }
+        return {
+          pipeline: pipeline,
+          version: version,
           nextStep: firstStep
             ? {
                 stepId: firstStep.stepId,
                 stepType: firstStep.stepType,
+                isFinal: firstStep.isFinal,
                 config: firstStep.config ?? null
               }
-            : null
+            : null,
+          nextRoutingKey: stepTypeToWorkerRoutingKey[firstStep.stepType]
         };
       }
 
@@ -42,16 +61,31 @@ export default async function pipelineRoutes(fastify) {
         });
       }
 
-      const nextStep = steps[currentIndex + 1] ?? null;
+      if (currentIndex === steps.lenght - 1) {
+        return reply.code(404).send({
+          error: "No hay mas pasos"
+        });
+      }
 
+
+      const nextStep = steps[currentIndex + 1] ?? null;
+        if(!(nextStep.stepType in stepTypeToWorkerRoutingKey)){
+          return reply.code(404).send({
+          error: "stepTypeInvalido"
+          });
+        }
       return {
+        pipeline: pipeline,
+        version: version,
         nextStep: nextStep
           ? {
               stepId: nextStep.stepId,
               stepType: nextStep.stepType,
+              isFinal: nextStep.isFinal,
               config: nextStep.config ?? null
             }
-          : null
+          : null,
+          nextRoutingKey: stepTypeToWorkerRoutingKey[nextStep.stepType]
       };
     }
   );

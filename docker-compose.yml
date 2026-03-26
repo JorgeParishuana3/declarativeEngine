@@ -66,8 +66,12 @@ services:
       - testnet
     volumes:
       - ./artifacts_files/pipelines:/app/src/pipelines
+      - pipelines_data:/data
+    environment:
+      - PIPELINE_DB_PATH=/data/pipeline.db.json
 
-
+volumes:
+  pipelines_data:
 networks:
   testnet:
     external: true
