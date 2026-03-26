@@ -1,10 +1,11 @@
 import pkg from 'pg';
 const { Pool } = pkg;
+import { PGHOST,PGPORT,PGUSER,PGDATABASE,PGPASSWORD} from './config.js';
 
 export const pool = new Pool({
-  host: 'postgres',
-  user: 'admin',
-  password: 'otipass123',
-  database: 'otiappdb',
-  port: 5432,
+  host: PGHOST,
+  user: PGUSER,
+  password: PGPASSWORD,
+  database: PGDATABASE,
+  port: PGPORT,
 });

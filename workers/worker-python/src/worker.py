@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from shared.utils.logger import log_info, log_warn, log_error
 from types import SimpleNamespace
 #from executor import run_python_script
-from config.config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
+from config import RABBIT_URL, REGISTRY_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY
 
 registry = PipelineRegistryClient(REGISTRY_URL)
 

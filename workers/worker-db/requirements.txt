@@ -2,3 +2,4 @@ pika
 requests
 psycopg[binary]
 psycopg-pool
+dotenv

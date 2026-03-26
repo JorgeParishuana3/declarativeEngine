@@ -1,0 +1,30 @@
+services:
+  pg-project-data-db:
+    container_name: pg-project-data-db
+    image: postgres:16
+    networks:
+      - testnet
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+    volumes:
+      - projects-pgdata:/var/lib/postgresql/data
+      - ./initSQL:/docker-entrypoint-initdb.d
+    ports:
+      - "4301:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_ADMIN_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  testnet:
+    external: true
+
+volumes:
+  projects-pgdata:

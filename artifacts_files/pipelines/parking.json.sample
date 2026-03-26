@@ -1,0 +1,27 @@
+{
+  "pipeline": "parking",
+  "project": "smart_parking",
+  "steps": [
+    {
+      "isFinal": false,
+      "stepId": "Reformat-to-binary",
+      "stepType" : "python-script",
+      "config": {"script": "parking-transform" }
+    },
+    {
+      "isFinal": true,
+      "stepId": "save_db",
+      "stepType": "db-save",
+      "config": {
+        "tabla": "sp_registros",
+        "column_map": {
+          "cam_id": "cam_id",
+          "timestamp": "ts",
+          "spots_state": "spots_state",
+          "layout": "layout",
+          "ids": "spot_ids"
+        }
+      }
+    }
+  ]
+}

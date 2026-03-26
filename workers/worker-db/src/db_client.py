@@ -3,7 +3,7 @@ import time
 from psycopg_pool import ConnectionPool
 from psycopg.rows import dict_row
 from psycopg import OperationalError, InterfaceError
-from config.config import PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
+from config import PGHOST, PGPORT, PGDATABASE, PGUSER, PGPASSWORD
 
 DB_CONFIG = {
     "host": PGHOST,

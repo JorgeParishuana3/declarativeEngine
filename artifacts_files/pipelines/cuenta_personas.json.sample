@@ -1,0 +1,18 @@
+{
+  "pipeline": "cuenta_personas",
+  "project": "cuenta_personas",
+  "steps": [
+    {
+      "isFinal": false,
+      "stepId": "reformat",
+      "stepType" : "python-script",
+      "config": {"script": "cuentaP" }
+    },
+    {
+      "isFinal": true,
+      "stepId": "save_db",
+      "stepType": "db-save",
+      "config" : {"tabla": "cupe_registros",  "column_map":{"cam_id":"cam_id","timestamp": "ts","aforo":"aforo"}}
+    }
+  ]
+}

@@ -4,7 +4,7 @@ from shared.pipeline.registry_client import PipelineRegistryClient
 from shared.utils.logger import log_info, log_warn, log_error
 
 from dynamic_writer import write_json_row
-from config.config import RABBIT_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY, REGISTRY_URL
+from config import RABBIT_URL, QUEUE_NAME, EXCHANGE, ROUTING_KEY, REGISTRY_URL
 registry = PipelineRegistryClient(REGISTRY_URL)
 
 def handle_message(channel, method, props, bodyB):

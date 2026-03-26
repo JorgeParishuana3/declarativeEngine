@@ -16,26 +16,6 @@ services:
     networks:
       - testnet
 
-  worker-python:
-    image: worker-python
-    container_name: worker-python
-    depends_on:
-      - rabbitmq
-    networks:
-      - testnet
-    volumes:
-      - ./config_files/worker-python:/app/src/config
-      - ./artifacts_files/python-scripts:/app/scripts
-  worker-db:
-    image: worker-db
-    container_name: worker-db
-    depends_on:
-      - rabbitmq
-    networks:
-      - testnet
-    volumes:
-      - ./config_files/worker-db:/app/src/config
-
   ingest-api:
     image: ingest-api
     container_name: ingest-api
@@ -49,6 +29,37 @@ services:
       PIPELINE_API_URL: http://pipeline-registry:3002
     networks:
       - testnet
+
+  worker-python:
+    image: worker-python
+    container_name: worker-python
+    depends_on:
+      - rabbitmq
+    networks:
+      - testnet
+    volumes:
+      - ./artifacts_files/python-scripts:/app/scripts
+    environment:
+      RABBIT_URL: amqp://rabbitmq
+      REGISTRY_URL: http://pipeline-registry:3002
+      ROUTING_KEY: workerpython
+
+  worker-db:
+    image: worker-db
+    container_name: worker-db
+    depends_on:
+      - rabbitmq
+    networks:
+      - testnet
+    environment:
+      RABBIT_URL: amqp://rabbitmq
+      REGISTRY_URL: http://pipeline-registry:3002
+      ROUTING_KEY: bd_manager
+      PGHOST: pg-project-data-db
+      PGPORT: 5432
+      PGDATABASE: otiappdb
+      PGUSER: ${PROJECT_DATA_WRITER_USER}
+      PGPASSWORD: ${PROJECT_DATA_WRITER_PASSWORD}
   
   db-api:
     image: db-api
@@ -57,6 +68,12 @@ services:
       - "3004:3004"    
     networks:
       - testnet
+    environment:
+      PGHOST: pg-project-data-db
+      PGPORT: 5432
+      PGDATABASE: otiappdb
+      PGUSER: ${PROJECT_DATA_READER_USER}
+      PGPASSWORD: ${PROJECT_DATA_READER_PASSWORD}
 
   pipeline-registry:
     image: pipeline-registry

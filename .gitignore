@@ -1,3 +1,4 @@
 *.tar
 config_files/*/*.py
 artifacts_files/*/*.json
+.env

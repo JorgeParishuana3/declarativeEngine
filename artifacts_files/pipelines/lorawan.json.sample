@@ -1,0 +1,32 @@
+{
+  "pipeline": "lorawan_calidadAire",
+  "project": "lora_wan",
+  "steps": [
+    {   
+        "isFinal": false,
+        "stepId": "decode", 
+        "stepType": "python-script",
+        "config": {
+            "script": "calidadAire-decode",
+            "params": {
+                "sample": "Mode_2"
+            }
+        }
+    },
+    {   
+        "isFinal": true,
+        "stepId": "guardado-db",
+        "stepType": "db-save",
+        "config": {
+           "tabla": "caliaire_registros",
+           "column_map":{
+                "idb":"idb",
+                "timestamp": "fecha_registro",
+                "humedad":"humedad", 
+                "temperatura":"temperatura_c", 
+                "dioxido_de_carbono": "dioxido_carbono_ppm"
+            }
+        }
+    }
+  ]  
+}
